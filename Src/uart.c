@@ -20,8 +20,13 @@
 #define SR_TXE				(1U<<7)
 #define SR_RXNE				(1U<<5)
 
+#define CR1_RXNEIE			(1U<<5)
+#define CR1_TXEIE			(1U<<7)
+
 static uint16_t compute_uart_div(uint32_t PeriphClk, uint32_t BaudRate);
 static void uart_set_baudrate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t BaudRate);
+void uart2_rx_interrupt_init();
+void uart2_tx_interrupt_init();
 void uart2_tx_init();
 void uart2_write(int ch);
 int __io_putchar(int ch);
@@ -32,6 +37,86 @@ static uint16_t compute_uart_div(uint32_t PeriphClk, uint32_t BaudRate){
 
 static void uart_set_baudrate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t BaudRate){
 	USARTx->BRR = compute_uart_div(PeriphClk,BaudRate);
+}
+
+void uart2_rx_interrupt_init(){
+	//configure uart gpio pin
+//	enable clock access to gpioa
+	RCC->AHB1ENR |= GPIOAEN;
+//	set pa2 mode to alternate func mode
+	GPIOA->MODER &=~(1U<<4);
+	GPIOA->MODER |= (1U<<5);
+//	set pa2 alternate func type to uart tx af07
+	GPIOA->AFR[0] |= (1U<<8);
+	GPIOA->AFR[0] |= (1U<<9);
+	GPIOA->AFR[0] |= (1U<<10);
+	GPIOA->AFR[0] &=~ (1U<<11);
+
+//	set pa3 mode to alternate func mode
+	GPIOA->MODER &=~(1U<<6);
+	GPIOA->MODER |= (1U<<7);
+
+//	set pa3 alternate func type to uart tx af07
+	GPIOA->AFR[0] |= (1U<<12);
+	GPIOA->AFR[0] |= (1U<<13);
+	GPIOA->AFR[0] |= (1U<<14);
+	GPIOA->AFR[0] &=~ (1U<<15);
+
+
+//	confugre uart module
+//	enable clcock access to uart2
+	RCC->APB1ENR |= USART2EN;
+//	configure uart baudrate
+	uart_set_baudrate(USART2,APB1_CLK, UART_BR);
+//	configure transfer direction
+	USART2->CR1 |= CR1_TE;
+	USART2->CR1 |= CR1_RE;
+//	enable receiver for rxne interrupt
+	USART2->CR1 |= CR1_RXNEIE;
+// 	enable uart2 interrupt in nvic
+	NVIC_EnableIRQ(USART2_IRQn);
+	//enable uart module
+	USART2->CR1 |= CR1_EN;
+}
+
+void uart2_tx_interrupt_init(){
+	//configure uart gpio pin
+//	enable clock access to gpioa
+	RCC->AHB1ENR |= GPIOAEN;
+//	set pa2 mode to alternate func mode
+	GPIOA->MODER &=~(1U<<4);
+	GPIOA->MODER |= (1U<<5);
+//	set pa2 alternate func type to uart tx af07
+	GPIOA->AFR[0] |= (1U<<8);
+	GPIOA->AFR[0] |= (1U<<9);
+	GPIOA->AFR[0] |= (1U<<10);
+	GPIOA->AFR[0] &=~ (1U<<11);
+
+//	set pa3 mode to alternate func mode
+	GPIOA->MODER &=~(1U<<6);
+	GPIOA->MODER |= (1U<<7);
+
+//	set pa3 alternate func type to uart tx af07
+	GPIOA->AFR[0] |= (1U<<12);
+	GPIOA->AFR[0] |= (1U<<13);
+	GPIOA->AFR[0] |= (1U<<14);
+	GPIOA->AFR[0] &=~ (1U<<15);
+
+
+//	confugre uart module
+//	enable clcock access to uart2
+	RCC->APB1ENR |= USART2EN;
+//	configure uart baudrate
+	uart_set_baudrate(USART2,APB1_CLK, UART_BR);
+//	configure transfer direction
+	USART2->CR1 |= CR1_TE;
+	USART2->CR1 |= CR1_RE;
+//	enable receiver for rxne interrupt
+	USART2->CR1 |= CR1_TXEIE;
+// 	enable uart2 interrupt in nvic
+	NVIC_EnableIRQ(USART2_IRQn);
+	//enable uart module
+	USART2->CR1 |= CR1_EN;
 }
 
 void uart2_rxtx_init(){

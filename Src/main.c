@@ -1,12 +1,9 @@
 #include "uart.h"
+#include <stdbool.h>
+#include <stdlib.h>
 
 #define GPIOAEN				(0x1UL<< 0)
-#define GPIODEN				(0x1UL<< 3)
-
-#define GPIODEN				(0x1UL<< 3)
-
-#define PIN0				(1U<<0)
-#define USER_BTN_PIN		PIN0
+#define GPIODEN				(0x1UL<< 3U)
 
 #define PIN12				(1U<<12)
 #define LED_GREEN			PIN12
@@ -20,6 +17,21 @@
 #define PIN15				(1U<<15)
 #define LED_BLUE			PIN15
 
+void USART2_IRQHandler(void);
+static void USART2_IRQ_callback(void);
+bool compareElements(int original[], int testval, int curridx);
+void flashLights(void);
+void spinLights(void);
+void handleLightInput(int curridx);
+
+
+
+void toggleLights(){
+	GPIOD->ODR ^= LED_GREEN;
+	GPIOD->ODR ^= LED_ORANGE;
+	GPIOD->ODR ^= LED_RED;
+	GPIOD->ODR ^= LED_BLUE;
+}
 void LightsOn(){
 	GPIOD->BSRR |= LED_GREEN;
 	GPIOD->BSRR |= LED_ORANGE;
@@ -33,13 +45,13 @@ void LightsOff(){
 	GPIOD->BSRR |= (1U<<31);
 }
 
+
 char key;
+int code[] = {0,8,1,0};
+int curridx = -1;
 
 int main(void){
-
-	RCC->AHB1ENR |= GPIOAEN;
 	RCC->AHB1ENR |= GPIODEN;
-
 
 	GPIOD->MODER |= (0x1UL<<24U);
 	GPIOD->MODER &=~(1U<<25);
@@ -53,15 +65,94 @@ int main(void){
 	GPIOD->MODER |= (0x1UL<<30U);
 	GPIOD->MODER &=~(1U<<31);
 
-	uart2_tx_init();
+	uart2_rx_interrupt_init();
 
-	while(1){
-		key = uart2_read();
-		if(key=='1'){
-			GPIOD->ODR &=~LED_GREEN;
-		}else{
-			GPIOD->ODR |= LED_GREEN;
+		while(1)
+		{
+
 		}
+}
+static void USART2_IRQ_callback(void){
+	key = USART2->DR;
+	int comp = key-'0';
+	if(compareElements(code,comp, curridx+1)){
+		curridx = curridx +1;
+		handleLightInput(curridx);
 
+	}else{
+		flashLights();
+		curridx = 0;
+	}
+	for(int i = 0;i<100000;i++);
+	if(curridx == 3){
+		spinLights();
+	}
+
+
+}
+void USART2_IRQHandler(void){
+//	check if rxne is set
+	if(USART2->SR & SR_RXNE){
+		USART2_IRQ_callback();
+
+	}
+}
+static void TIM2_IRQHandler_callback(void){
+
+}
+
+void TIM2_IRQHandler(void){
+	TIM2->SR &=~ SR_UIF;
+	TIM2_IRQHandler_callback();
+}
+void handleLightInput(int curridx){
+	switch (curridx) {
+		case 0:
+			GPIOD->BSRR |= LED_GREEN;
+			break;
+		case 1:
+			GPIOD->BSRR |= LED_ORANGE;
+			break;
+		case 2:
+			GPIOD->BSRR |= LED_RED;
+			break;
+		case 3:
+			GPIOD->BSRR |= LED_BLUE;
+			break;
+		default:
+			LightsOff();
+			break;
+		}
+}
+void flashLights(void){
+	for(int j  = 0;j<4;j++){
+		LightsOn();
+		for(int i = 0;i<100000;i++);
+		LightsOff();
+		for(int i = 0;i<100000;i++);
+	}
+
+}
+void spinLights(void){
+	for(int j = 0;j<4;j++){
+		GPIOD->BSRR |= LED_GREEN;
+		for(int i = 0;i<100000;i++);
+		LightsOff();
+		GPIOD->BSRR |= LED_ORANGE;
+		for(int i = 0;i<100000;i++);
+		LightsOff();
+		GPIOD->BSRR |= LED_RED;
+		for(int i = 0;i<100000;i++);
+		LightsOff();
+		GPIOD->BSRR |= LED_BLUE;
+		for(int i = 0;i<100000;i++);
+		LightsOff();
+	}
+}
+bool compareElements(int original[], int testval, int curridx){
+	if(original[curridx]==testval){
+		return true;
+	}else{
+		return false;
 	}
 }
