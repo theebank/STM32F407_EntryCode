@@ -81,11 +81,12 @@ static void USART2_IRQ_callback(void){
 
 	}else{
 		flashLights();
-		curridx = 0;
+		curridx = -1;
 	}
 	for(int i = 0;i<100000;i++);
 	if(curridx == 3){
 		spinLights();
+		curridx = -1;
 	}
 
 
@@ -97,14 +98,7 @@ void USART2_IRQHandler(void){
 
 	}
 }
-static void TIM2_IRQHandler_callback(void){
 
-}
-
-void TIM2_IRQHandler(void){
-	TIM2->SR &=~ SR_UIF;
-	TIM2_IRQHandler_callback();
-}
 void handleLightInput(int curridx){
 	switch (curridx) {
 		case 0:
