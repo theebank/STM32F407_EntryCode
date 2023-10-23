@@ -10,5 +10,8 @@ Utilizes Custom driver written for the GPIO Module
 ## Hardware Required
 - STM32F407 Discovery Board
 
-- Female-Female Jumper Wires OR USB-TTL Serial Adapter with TX RX pin compatibility
+- Choice of USART Connection: Female-Female Jumper Wires OR USB-TTL Serial Adapter with TX RX pin compatibility
+
+## Hardware Setup
+- Connect choice of USART connection as shown in STM32F407 Discovery Board User Manual
  
