@@ -10,7 +10,5 @@ Utilizes Custom driver written for the GPIO Module
 ## Hardware Required
 - STM32F407 Discovery Board
 
-- Female-Female Jumper Wires 
-OR 
-- USB to TTL Serial Adapter
+- Female-Female Jumper Wires OR USB-TTL Serial Adapter with TX RX pin compatibility
  
