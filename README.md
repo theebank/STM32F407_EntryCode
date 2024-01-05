@@ -4,7 +4,7 @@
 
 If correct code is input into web page, Lights will flash in a clockwise pattern, otherwise will flash all 4 lights at once 3 times.
 
-## Design
+## System Design
 
 ![Alt text](image.png)
 
