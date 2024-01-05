@@ -1,2 +1,2 @@
-fe\node_modules
-api\env
+fe\node_modules\
+api\env\*
